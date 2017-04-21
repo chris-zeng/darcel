@@ -3,6 +3,7 @@ from collections import defaultdict
 import pprint
 import re
 import sys, string
+from pyparsing import *
 
 class CodeGenerator:
     def begin(self, tab="\t"):
@@ -48,14 +49,21 @@ class StateMachineGenerator:
         self.file_text = open(input_filename, "r").read()
         self.output_filename = output_filename
         self.header = None
+        self.dot_block = None
         self.body = None
-    
-    def generate_body(self):
-        body_text = re.search(r"\{(.*)\}", self.file_text, re.DOTALL).group(0)
-        matches = re.finditer(r"^(.*)\;", body_text, re.MULTILINE)
-        self.body=[]
+        
+    def extract_dot_block(self):
+        dot_block_text = re.search(r"\{(.*)\}", self.file_text, re.DOTALL).group(0)
+        matches = re.finditer(r"^(.*)\;", dot_block_text, re.MULTILINE)
+        self.dot_block=[]
         for match in matches:
-            self.body.append(str(match.group(0)))
+            self.dot_block.append(str(match.group(0)))
+    
+    def extract_body(self):
+        regex = r"}(.*)"
+        matches = re.search(regex, self.file_text, re.DOTALL)
+        self.body = matches.group(1)
+        self.body = self.body.lstrip()
     
     def extract_weights(self, labels):
         weights = []
@@ -87,8 +95,9 @@ class StateMachineGenerator:
         self.header = self.header.replace('digraph','')
         self.header = ''.join(self.header.split(' '))
         self.state_graph = StateGraph(self.header)
-        self.generate_body()
-        for line in self.body:
+        self.extract_dot_block()
+        self.extract_body()
+        for line in self.dot_block:
             if "->" in line:
                 source_name = re.search(r"(.*)->", line).group(1).strip()
                 destination_name = re.search(r"-> (.*) \[", line).\
@@ -97,26 +106,59 @@ class StateMachineGenerator:
                 labels = ''.join(labels.split(' '))
                 weights = self.extract_weights(labels)            
                 self.add_edge(source_name, destination_name, weights, labels)
-        self.state_graph.print_graph()
         self.generate_code()
-        
-    def generate_code(self):
-        c = CodeGenerator()
-        c.begin(tab="    ")
-        c.write("import beam\n")
-        c.write("import nexus\n")
-        c.write("class {0}:\n".format(self.header))
+    
+    def parse_parameters(self):
+        i_consider_whitespaces_to_be_only = ' '
+        ParserElement.setDefaultWhitespaceChars(i_consider_whitespaces_to_be_only)
+        newline = Suppress('\n')
+        colon = Suppress(':')
+        word = Word(alphanums+"_")
+        field_name = Keyword('Parameters')+newline
+        field_property = word + colon + word + newline
+        field = field_name + OneOrMore(Group(field_property)).setResultsName("parameters")
+        parsed_field = field.parseString(self.body)
+        print parsed_field.parameters
+        return parsed_field.parameters
+    '''    
+    def parse_variables(self):
+        i_consider_whitespaces_to_be_only = ' '
+        ParserElement.setDefaultWhitespaceChars(i_consider_whitespaces_to_be_only)
+        newline = Suppress('\n')
+        colon = Suppress(':')
+        word = Word(alphanums+"_")
+        field_name = Keyword('Variables')+newline
+        field_property = word + colon + word + newline
+        field = field_name + OneOrMore(Group(field_property)).setResultsName("variables")
+        parsed_field = field.parseString(self.body)
+        print parsed_field.variables
+        return parsed_field.variables
+    '''
+    def generate_constructor(self, c):
         c.indent()
-        c.write("def __init__(self):\n")
-        c.write("###States###\n")
+        parameters = self.parse_parameters()
+        #variables = self.parse_variables()
+        init_func_decl = "def __init__(self"
+        for param in parameters:
+            init_func_decl+=", {0}".format(param[0])
+        init_func_decl+="):\n"
+        c.write(init_func_decl)
+        c.indent()
+        c.write("self.state = None\n")
+        for param in parameters:
+            c.write("self.{0} = None".format(param[0]))
+            c.write("\n")
+        c.dedent()
+        c.write("\n")
+        return
+    
+    def generate_states_code(self, c):
         states = sorted(self.state_graph.states, key=lambda state: int(
                                                     filter(str.isdigit, state)))
-        conditions = sorted(self.state_graph.conditions, key=lambda condition:\
-                                            int(filter(str.isdigit, condition)))
-        events = sorted(self.state_graph.events, key=lambda event:\
-                                            int(filter(str.isdigit, event)))
         for state in states:
             c.write("def "+state+"(self):\n")
+            c.indent()
+            c.write("state == {0}\n".format(int(filter(str.isdigit, state))))
             destinations = self.state_graph.adjacency_list[state]
             for destination in destinations:
                 destination_state = destination[0]
@@ -142,11 +184,18 @@ class StateMachineGenerator:
                         c.write("return self.{0}()\n".format(destination_state))
                         c.dedent()
             c.write("\n")
-        c.write("###Conditions###\n")
+            c.dedent()
+        
+    def generate_conditions_code(self, c):
+        conditions = sorted(self.state_graph.conditions, key=lambda condition:\
+                                            int(filter(str.isdigit, condition)))
         for condition in conditions:
             c.write("def {0}(self):\n".format(condition))
             c.write("\n")
-        c.write("###Events###\n")  
+    
+    def generate_events_code(self, c):
+        events = sorted(self.state_graph.events, key=lambda event:\
+                                            int(filter(str.isdigit, event)))
         for event in events:
             c.write("def {0}(self):\n".format(event))
             for source_destination in self.state_graph.events[event]:
@@ -160,6 +209,19 @@ class StateMachineGenerator:
                 c.dedent()
                 c.dedent()
             c.write("\n")
+    
+    def generate_code(self): 
+        c = CodeGenerator()
+        c.begin(tab="    ")
+        c.write("import beam\n")
+        c.write("import nexus\n")
+        c.write("\n")
+        c.write("class {0}:\n".format(self.header))
+        self.generate_constructor(c)
+        self.generate_states_code(c)
+        self.generate_conditions_code(c)
+        self.generate_events_code(c)
+        
         f = open(self.output_filename,'w')
         f.write(c.end())
         f.close()

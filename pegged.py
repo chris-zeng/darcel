@@ -1,26 +1,34 @@
 import beam
 import nexus
+
 class PeggedOrder:
-    def __init__():
-    ###States###
+    def __init__(self, order_fields, offset):
+        self.state = None
+        self.order_fields = None        
+        self.offset = None        
+    
     def S0(self):
-    
+        state == 0
+        
     def S1(self):
-    
+        state == 1
+        
     def S2(self):
-    
+        state == 2
+        
     def S3(self):
-        if self.C0():
-            return self.S5()
-    
+        state == 3
+            if self.C0():
+                return self.S5()
+        
     def S4(self):
-    
+        state == 4
+        
     def S5(self):
-    
-    ###Conditions###
+        state == 5
+        
     def C0(self):
     
-    ###Events###
     def E0(self):
         if self.state == 0:
             return self.S1()
