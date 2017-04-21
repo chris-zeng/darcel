@@ -1,0 +1,57 @@
+digraph CreditTrader{
+    node [shape = circle];
+    rankdir = LR;
+    S0 [color = green, fontcolor = green];
+    S4 [color = red, fontcolor = red];
+
+    S0 -> S1 [label = "E0"];
+    S1 -> S2 [label = "E1"];
+    S2 -> S3 [label = "&#949;"];
+    S3 -> S4 [label = "E2"];
+    S3 -> S4 [label = "C4"];
+    S3 -> S5 [label = "E3"];
+    S5 -> S5 [label = "E0, E5,  E6"];
+    S5 -> S6 [label = "C0"];
+    S5 -> S8 [label = "C1"];
+    S6 -> S7 [label = "E5, E7"];
+    S7 -> S4 [label = "E2"];    
+    S7 -> S5 [label = "E3"];
+    S8 -> S4 [label = "E2"]
+    S8 -> S4 [label = "E2"];
+    S8 -> S9 [label = "E5"];
+    S9 -> S2 [label = "C2"];
+    S9 -> S5 [label = "!C2 && C3"];
+    S9 -> S10 [label = "!C2 && !C3"];
+    S10 -> S2 [label = "E4"];
+}
+
+S0 - Subscribe to BBO for security A. Set A's initial side to BID
+S1 - Subscribe to BBO for security B. Set B's initial side to ASK
+S2 - Reset variables used to kee p track of execution progress.
+S3 - Submit limit bid order for security A.
+       price = BBO quote price
+       quantity = initial quantity provided by user
+S6 - Cancel A order.
+S7 - Submit limit bid orders for security A.
+       price = BBO quote price
+       quantity = left over amount that has not been filled. 
+S9 - Swap A and B side if condition 2 is met.
+S8 - Submit market ask order for security B.
+       quantity = calculated quantity used to balance A. 
+S10 - Cancel remaining A bid orders. Change A and B's sides
+
+E0 - BBO quote update for security A.
+E1 - BBO quote update for security B.
+E2 - Execution report with status REJECTED.
+E3 - Execution report with status NEW.
+E4 - Execution report with terminal status.
+E5 - Execution report with status FILLED.
+E6 - Execution report with status PARTIALLY_FILLED.
+E7 - Execution report with status CANCELLED.
+
+C0 - if security A is on the BID side and BBO price moved above A's order price.
+       or if security A is on the ASK side and BBO price moved below A's order price.
+C1 - order imbalance exist if B's quantity obtained from A's unbalanced quantity is greater or equal to 100.
+C2 - If A's filled quantity is equal to A's origin quantity submitted by user.
+C3 - If B's quantity obtained from A's unfilled quantity is greater or equal to 100.
+C4 - Check if initial quantity for A is enough to produce at least 100 shares    of B
