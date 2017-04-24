@@ -1,9 +1,11 @@
 import argparse
 from collections import defaultdict
-import pprint
+import ConfigParser
 import re
-import sys, string
 from pyparsing import *
+import pprint
+import StringIO
+import sys, string
 
 class CodeGenerator:
     def begin(self, tab="\t"):
@@ -43,7 +45,7 @@ class StateGraph:
         pp.pprint(self.conditions)
         print "graph"
         pp.pprint(dict(self.adjacency_list))
-   
+
 class StateMachineGenerator:
     def __init__(self, input_filename, output_filename):
         self.file_text = open(input_filename, "r").read()
@@ -51,20 +53,21 @@ class StateMachineGenerator:
         self.header = None
         self.dot_block = None
         self.body = None
-        
+
     def extract_dot_block(self):
-        dot_block_text = re.search(r"\{(.*)\}", self.file_text, re.DOTALL).group(0)
+        dot_block_text = re.search(r"\{(.*)\}", self.file_text, 
+                                    re.DOTALL).group(0)
         matches = re.finditer(r"^(.*)\;", dot_block_text, re.MULTILINE)
         self.dot_block=[]
         for match in matches:
             self.dot_block.append(str(match.group(0)))
-    
+
     def extract_body(self):
         regex = r"}(.*)"
         matches = re.search(regex, self.file_text, re.DOTALL)
         self.body = matches.group(1)
         self.body = self.body.lstrip()
-    
+
     def extract_weights(self, labels):
         weights = []
         regex = r"E+\d*|C+\d*|&#949"
@@ -72,7 +75,7 @@ class StateMachineGenerator:
         for match in matches:
             weights.append(match.group())
         return weights
-                
+
     def add_edge(self, source, destination, weights, labels):
         self.state_graph.states.add(source)
         self.state_graph.states.add(destination)
@@ -88,7 +91,7 @@ class StateMachineGenerator:
         labels = labels.replace("~","not ")
         self.state_graph.adjacency_list[source].append(
                                                 [destination, weights, labels])
-    
+
     def generate_graph(self):
         header_regex = re.compile("(.*?)\s*\{")
         self.header = header_regex.match(self.file_text).group(1)
@@ -107,55 +110,59 @@ class StateMachineGenerator:
                 weights = self.extract_weights(labels)            
                 self.add_edge(source_name, destination_name, weights, labels)
         self.generate_code()
-    
-    def parse_parameters(self):
-        i_consider_whitespaces_to_be_only = ' '
-        ParserElement.setDefaultWhitespaceChars(i_consider_whitespaces_to_be_only)
-        newline = Suppress('\n')
-        colon = Suppress(':')
-        word = Word(alphanums+"_")
-        field_name = Keyword('Parameters')+newline
-        field_property = word + colon + word + newline
-        field = field_name + OneOrMore(Group(field_property)).setResultsName("parameters")
-        parsed_field = field.parseString(self.body)
-        print parsed_field.parameters
-        return parsed_field.parameters
-    '''    
-    def parse_variables(self):
-        i_consider_whitespaces_to_be_only = ' '
-        ParserElement.setDefaultWhitespaceChars(i_consider_whitespaces_to_be_only)
-        newline = Suppress('\n')
-        colon = Suppress(':')
-        word = Word(alphanums+"_")
-        field_name = Keyword('Variables')+newline
-        field_property = word + colon + word + newline
-        field = field_name + OneOrMore(Group(field_property)).setResultsName("variables")
-        parsed_field = field.parseString(self.body)
-        print parsed_field.variables
-        return parsed_field.variables
-    '''
+
+    def ConfigSectionMap(self, section):
+        dict1 = {}
+        options = self.Config.options(section)
+        for option in options:
+            try:
+                dict1[option] = self.Config.get(section, option)
+                if dict1[option] == -1:
+                    DebugPrint("skip: %s" % option)
+            except:
+                print("exception on %s!" % option)
+                dict1[option] = None
+        return dict1
+
     def generate_constructor(self, c):
+        self.Config = ConfigParser.ConfigParser()
+        buf = StringIO.StringIO(self.body)
+        self.Config = ConfigParser.ConfigParser()
+        self.Config.readfp(buf)
         c.indent()
-        parameters = self.parse_parameters()
+        parameters = self.ConfigSectionMap("Parameters")
         #variables = self.parse_variables()
-        init_func_decl = "def __init__(self"
+        init_func_decl = "def __init__(self, service_clients"
         for param in parameters:
-            init_func_decl+=", {0}".format(param[0])
+            init_func_decl+=", {0}".format(param)
         init_func_decl+="):\n"
         c.write(init_func_decl)
         c.indent()
         c.write("self.state = None\n")
         for param in parameters:
-            c.write("self.{0} = None".format(param[0]))
+            c.write("self.{0} = {0}".format(param))
             c.write("\n")
+        variables = self.ConfigSectionMap("Variables")
+        for var in variables:
+            c.write("self.{0} = None".format(var))
+            c.write("\n")
+        c.write("self.service_clients = service_clients\n")
+        c.write("self.tasks = beam.RoutineTaskQueue()\n")
+        c.write("self.completion_queue = beam.Queue()\n")
+        c.write("""self.market_data_client = self.\\
+                service_clients.get_market_data_client()\n""")
+        c.write("self.order_execution_client = self.service_clients.\ \n")
+        c.write("        get_order_execution_client()\n")
+        c.dedent()
         c.dedent()
         c.write("\n")
         return
-    
+
     def generate_states_code(self, c):
         states = sorted(self.state_graph.states, key=lambda state: int(
                                                     filter(str.isdigit, state)))
         for state in states:
+            c.indent()
             c.write("def "+state+"(self):\n")
             c.indent()
             c.write("state == {0}\n".format(int(filter(str.isdigit, state))))
@@ -173,30 +180,32 @@ class StateMachineGenerator:
                                 edge=edge.replace(match.group(0), "self."+\
                                     match.group(0)+"()")
                                 temp_hash.add(match.group(0))
-                        c.indent()
                         c.write("if {0}:\n".format(edge))
                         c.indent()
                         c.write("return self.{0}()\n".format(destination_state))
-                        c.dedent()
                         c.dedent()
                     elif edge == "&#949;":
                         c.indent()
                         c.write("return self.{0}()\n".format(destination_state))
                         c.dedent()
-            c.write("\n")
             c.dedent()
-        
+            c.dedent()
+            c.write("\n")
+
     def generate_conditions_code(self, c):
         conditions = sorted(self.state_graph.conditions, key=lambda condition:\
                                             int(filter(str.isdigit, condition)))
         for condition in conditions:
+            c.indent()
             c.write("def {0}(self):\n".format(condition))
+            c.dedent()
             c.write("\n")
-    
+
     def generate_events_code(self, c):
         events = sorted(self.state_graph.events, key=lambda event:\
                                             int(filter(str.isdigit, event)))
         for event in events:
+            c.indent()
             c.write("def {0}(self):\n".format(event))
             for source_destination in self.state_graph.events[event]:
                 source = source_destination[0]
@@ -208,8 +217,9 @@ class StateMachineGenerator:
                 c.write("return self.{0}()\n".format(destination))
                 c.dedent()
                 c.dedent()
+            c.dedent()
             c.write("\n")
-    
+
     def generate_code(self): 
         c = CodeGenerator()
         c.begin(tab="    ")
@@ -218,10 +228,23 @@ class StateMachineGenerator:
         c.write("\n")
         c.write("class {0}:\n".format(self.header))
         self.generate_constructor(c)
+        c.indent()
+        c.write("def start(self):\n")
+        c.indent()
+        c.write("self.tasks.push(self.S0)\n")
+        c.dedent()
+        c.dedent()
+        c.write("\n")
+        c.indent()
+        c.write("def wait(self):\n")
+        c.indent()
+        c.write("self.completion_queue.top()\n")
+        c.dedent()
+        c.dedent()
+        c.write("\n")
         self.generate_states_code(c)
         self.generate_conditions_code(c)
         self.generate_events_code(c)
-        
         f = open(self.output_filename,'w')
         f.write(c.end())
         f.close()
@@ -233,7 +256,7 @@ def parse_inputs():
     parser.add_argument('-o', '--output', dest = 'output_filename', 
                         required = True)
     args = parser.parse_args()
-    return args           
+    return args
 
 def main():
     args = parse_inputs()

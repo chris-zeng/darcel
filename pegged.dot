@@ -16,35 +16,35 @@ digraph PeggedOrder {
   S5 -> S1 [label = "E4"];
 }
 
-Parameters
-  order_fields: OrderFields
-  offset: Money
+[Parameters]
+order_fields: OrderFields
+offset: Money
 
-Variables
-  position: Quantity
+[Variables]
+position: Quantity
+position2: Quantity
+position3: Quantity
 
-States
-  S0: query_bbo_quotes(order_fields.security) as bbo_quote
+[States]
+S0: query_bbo_quotes(order_fields.security) as bbo_quote
+S1:
+  price = pick(order_fields.side, bbo_quote.ask.price, bbo_quote.bid.price) - get_direction(order_fields.side) * offset
+  submit_order(order_fields.security, price, order_fields.quantity - position) as order
+S5: cancel(order)
 
-  S1:
-    price = pick(order_fields.side, bbo_quote.ask.price, bbo_quote.bid.price) - get_direction(order_fields.side) * offset
-    submit_order(order_fields.security, price, order_fields.quantity - position) as order
+[Events]
+E0: BboQuote(bbo_quote)
+E1: ExecutionReport(order) e where e.status == REJECTED
+E2: ExecutionReport(order) e where e.status == NEW
+E3: ExecutionReport(order) e where e.status == FILLED
+E4: ExecutionReport(order) e where is_terminal(e.status)
 
-  S5: cancel(order)
+[Conditions]
+C0:
+  price = pick(order_fields.side, bbo_quote.ask.price, bbo_quote.bid.price) - get_direction(order_fields.side) * offset
+  order.info.price != price
 
-Events:
-  E0: BboQuote(bbo_quote)
-  E1: ExecutionReport(order) e where e.status == REJECTED
-  E2: ExecutionReport(order) e where e.status == NEW
-  E3: ExecutionReport(order) e where e.status == FILLED
-  E4: ExecutionReport(order) e where is_terminal(e.status)
-
-Conditions:
-  C0:
-    price = pick(order_fields.side, bbo_quote.ask.price, bbo_quote.bid.price) - get_direction(order_fields.side) * offset
-    order.info.price != price
-
-Handlers:
-  H0:
-    ExecutionReport(order) e
-    position += e.last_quantity
+[Handlers]
+H0:
+  ExecutionReport(order) e
+  position += e.last_quantity
