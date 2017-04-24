@@ -1,11 +1,12 @@
 import argparse
 from collections import defaultdict
 import ConfigParser
-import re
-from pyparsing import *
 import pprint
+from pyparsing import *
+import re
+import string
 import StringIO
-import sys, string
+import sys
 
 class CodeGenerator:
     def begin(self, tab="\t"):
@@ -18,7 +19,7 @@ class CodeGenerator:
 
     def write(self, string):
         self.code.append(self.tab * self.level + string)
-        
+
     def indent(self):
         self.level = self.level + 1
 
