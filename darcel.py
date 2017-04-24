@@ -35,7 +35,7 @@ class StateGraph:
         self.states = set()
         self.events = defaultdict(list)
         self.conditions = set()
-        
+
     def print_graph(self):
         pp = pprint.PrettyPrinter(indent=4)
         print "all states"
