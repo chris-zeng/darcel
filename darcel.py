@@ -163,7 +163,8 @@ class StateMachineGenerator:
             c.indent()
             c.write("def "+state+"(self):\n")
             c.indent()
-            c.write("state == {0}\n".format(int(filter(str.isdigit, state))))
+            c.write("self.state = {0}\n".format(
+                int(filter(str.isdigit, state))))
             destinations = self.state_graph.adjacency_list[state]
             for destination in destinations:
                 destination_state = destination[0]

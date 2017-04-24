@@ -24,24 +24,24 @@ class PeggedOrder:
         self.completion_queue.top()
 
     def S0(self):
-        state == 0
+        self.state = 0
 
     def S1(self):
-        state == 1
+        self.state = 1
 
     def S2(self):
-        state == 2
+        self.state = 2
 
     def S3(self):
-        state == 3
+        self.state = 3
         if self.C0():
             return self.S5()
 
     def S4(self):
-        state == 4
+        self.state = 4
 
     def S5(self):
-        state == 5
+        self.state = 5
 
     def C0(self):
 
