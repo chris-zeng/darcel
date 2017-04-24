@@ -59,7 +59,7 @@ class StateMachineGenerator:
         dot_block_text = re.search(r"\{(.*)\}", self.file_text, 
                                     re.DOTALL).group(0)
         matches = re.finditer(r"^(.*)\;", dot_block_text, re.MULTILINE)
-        self.dot_block=[]
+        self.dot_block = []
         for match in matches:
             self.dot_block.append(str(match.group(0)))
 
@@ -132,11 +132,10 @@ class StateMachineGenerator:
         self.Config.readfp(buf)
         c.indent()
         parameters = self.ConfigSectionMap("Parameters")
-        #variables = self.parse_variables()
         init_func_decl = "def __init__(self, service_clients"
         for param in parameters:
-            init_func_decl+=", {0}".format(param.rstrip())
-        init_func_decl+="):\n"
+            init_func_decl += ", {0}".format(param.rstrip())
+        init_func_decl += "):\n"
         c.write(init_func_decl)
         c.indent()
         c.write("self.state = None\n")
@@ -158,8 +157,8 @@ class StateMachineGenerator:
         return
 
     def generate_states_code(self, c):
-        states = sorted(self.state_graph.states, key=lambda state: int(
-                                                    filter(str.isdigit, state)))
+        states = sorted(self.state_graph.states, key = lambda state: int(
+                            filter(str.isdigit, state)))
         for state in states:
             c.indent()
             c.write("def "+state+"(self):\n")
@@ -176,7 +175,7 @@ class StateMachineGenerator:
                         temp_hash = set()
                         for match in matches:
                             if match.group(0) not in temp_hash:
-                                edge=edge.replace(match.group(0), "self."+\
+                                edge = edge.replace(match.group(0), "self."+\
                                     match.group(0)+"()")
                                 temp_hash.add(match.group(0))
                         c.write("if {0}:\n".format(edge))
@@ -192,8 +191,9 @@ class StateMachineGenerator:
             c.write("\n")
 
     def generate_conditions_code(self, c):
-        conditions = sorted(self.state_graph.conditions, key=lambda condition:\
-                                            int(filter(str.isdigit, condition)))
+        conditions = sorted(self.state_graph.conditions, 
+                                key = lambda condition:\
+                                int(filter(str.isdigit, condition)))
         for condition in conditions:
             c.indent()
             c.write("def {0}(self):\n".format(condition))
@@ -201,7 +201,7 @@ class StateMachineGenerator:
             c.write("\n")
 
     def generate_events_code(self, c):
-        events = sorted(self.state_graph.events, key=lambda event:\
+        events = sorted(self.state_graph.events, key = lambda event:\
                                             int(filter(str.isdigit, event)))
         for event in events:
             c.indent()
@@ -221,7 +221,7 @@ class StateMachineGenerator:
 
     def generate_code(self): 
         c = CodeGenerator()
-        c.begin(tab="    ")
+        c.begin(tab = "    ")
         c.write("import beam\n")
         c.write("import nexus\n")
         c.write("\n")
