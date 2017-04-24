@@ -4,11 +4,11 @@ import nexus
 class PeggedOrder:
     def __init__(self, service_clients, order_fields, offset):
         self.state = None
-        self.order_fields = order_fields        
-        self.offset = offset        
-        self.position2 = None        
-        self.position = None        
-        self.position3 = None        
+        self.order_fields = order_fields
+        self.offset = offset
+        self.position2 = None
+        self.position = None
+        self.position3 = None
         self.service_clients = service_clients
         self.tasks = beam.RoutineTaskQueue()
         self.completion_queue = beam.Queue()

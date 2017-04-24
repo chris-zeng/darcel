@@ -135,18 +135,16 @@ class StateMachineGenerator:
         #variables = self.parse_variables()
         init_func_decl = "def __init__(self, service_clients"
         for param in parameters:
-            init_func_decl+=", {0}".format(param)
+            init_func_decl+=", {0}".format(param.rstrip())
         init_func_decl+="):\n"
         c.write(init_func_decl)
         c.indent()
         c.write("self.state = None\n")
         for param in parameters:
-            c.write("self.{0} = {0}".format(param))
-            c.write("\n")
+            c.write("self.{0} = {0}\n".format(param.rstrip()))
         variables = self.ConfigSectionMap("Variables")
         for var in variables:
-            c.write("self.{0} = None".format(var))
-            c.write("\n")
+            c.write("self.{0} = None\n".format(var.rstrip()))
         c.write("self.service_clients = service_clients\n")
         c.write("self.tasks = beam.RoutineTaskQueue()\n")
         c.write("self.completion_queue = beam.Queue()\n")
