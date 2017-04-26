@@ -1,14 +1,9 @@
 import beam
 import nexus
 
-class PeggedOrder:
-    def __init__(self, service_clients, order_fields, offset):
+class TestCase3:
+    def __init__(self, service_clients):
         self.state = None
-        self.order_fields = order_fields
-        self.offset = offset
-        self.position2 = None
-        self.position = None
-        self.position3 = None
         self.service_clients = service_clients
         self.tasks = beam.RoutineTaskQueue()
         self.completion_queue = beam.Queue()
@@ -25,17 +20,14 @@ class PeggedOrder:
 
     def S0(self):
         self.state = 0
+        if self.C0():
+            return self.S5()
 
     def S1(self):
         self.state = 1
 
     def S2(self):
         self.state = 2
-
-    def S3(self):
-        self.state = 3
-        if self.C0():
-            return self.S5()
 
     def S4(self):
         self.state = 4
@@ -48,24 +40,12 @@ class PeggedOrder:
     def E0(self):
         if self.state == 0:
             return self.S1()
-        if self.state == 3:
-            return self.S3()
 
     def E1(self):
-        if self.state == 1:
+        if self.state == 0:
             return self.S2()
 
-    def E2(self):
-        if self.state == 1:
-            return self.S3()
-
     def E3(self):
-        if self.state == 3:
+        if self.state == 0:
             return self.S4()
-        if self.state == 5:
-            return self.S4()
-
-    def E4(self):
-        if self.state == 5:
-            return self.S1()
 

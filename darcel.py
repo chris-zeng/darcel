@@ -114,7 +114,11 @@ class StateMachineGenerator:
 
     def ConfigSectionMap(self, section):
         dict1 = {}
-        options = self.Config.options(section)
+        options = None
+        try:
+            options = self.Config.options(section)
+        except:
+            return dict1
         for option in options:
             try:
                 dict1[option] = self.Config.get(section, option)

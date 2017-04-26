@@ -1,0 +1,16 @@
+digraph TestCase4{
+  S0 -> S1 [label = "E0"];
+}
+[Variables]
+var1:some_type1
+var2:some_type2
+var3:some_type3
+var4:some_type4
+
+# some comment about the states
+
+[Parameters]
+param1:some_type1
+param2:some_type2
+param3:some_type3
+param4:some_type4
