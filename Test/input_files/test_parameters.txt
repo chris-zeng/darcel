@@ -1,0 +1,13 @@
+digraph test_parameters{
+    S0 -> S1 [label="&#949;"];
+}
+
+[Parameters]
+param1:type_1
+param2:type_2
+param3:type_2
+param4:type_2
+param5:type_2
+param6:type_2
+param7:type_2
+param8:type_2

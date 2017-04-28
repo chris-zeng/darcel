@@ -1,8 +1,0 @@
-digraph TestCase3 {
-  S0 -> S1 [label = "E0"];
-  S0 -> S2 [label = "E1"];
-  S0 -> S4 [label = "E3"];
-  S0 -> S5 [label = "C0"];
-}
-
-[Variables]

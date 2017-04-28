@@ -1,6 +1,5 @@
 import argparse
 from collections import defaultdict
-import ConfigParser
 import pprint
 from pyparsing import *
 import re
@@ -54,6 +53,7 @@ class StateMachineGenerator:
         self.header = None
         self.dot_block = None
         self.body = None
+        ParserElement.setDefaultWhitespaceChars(" \t")
 
     def extract_dot_block(self):
         dot_block_text = re.search(r"\{(.*)\}", self.file_text, 
@@ -112,42 +112,55 @@ class StateMachineGenerator:
                 self.add_edge(source_name, destination_name, weights, labels)
         self.generate_code()
 
-    def ConfigSectionMap(self, section):
-        dict1 = {}
-        options = None
-        try:
-            options = self.Config.options(section)
-        except:
-            return dict1
-        for option in options:
-            try:
-                dict1[option] = self.Config.get(section, option)
-                if dict1[option] == -1:
-                    DebugPrint("skip: %s" % option)
-            except:
-                print("exception on %s!" % option)
-                dict1[option] = None
-        return dict1
+    def parse_parameter(self):
+        word = Word(alphanums + '_')
+        newline = Suppress('\n')
+        colon = Suppress(':')
+        arrow = Suppress('->')
+        left_square_bracket = Suppress('[')
+        right_square_bracket = Suppress(']')
+        parameter_field_name = Literal('[Parameters]')
+        attribute = word+colon+word + newline
+        parameter_field = parameter_field_name + newline + Group(OneOrMore(Group(attribute)))
+        parsed_parameter = parameter_field.scanString(self.body)
+        parameters=[]
+        for p in parsed_parameter:
+            for a in p[0][1]:
+                parameters.append((a[0], a[1]))
+        return parameters
+
+    def parse_variables(self):
+        word = Word(alphanums + '_')
+        newline = Suppress('\n')
+        colon = Suppress(':')
+        arrow = Suppress('->')
+        left_square_bracket = Suppress('[')
+        right_square_bracket = Suppress(']')
+        variable_field_name = Literal('[Variables]')
+        attribute = word+colon+word + newline
+        variable_field = variable_field_name + newline + Group(OneOrMore(Group(attribute)))
+        parsed_variables = variable_field.scanString(self.body)
+        variables=[]
+        for p in parsed_variables:
+            for a in p[0][1]:
+                variables.append((a[0], a[1]))
+        return variables
 
     def generate_constructor(self, c):
-        self.Config = ConfigParser.ConfigParser()
-        buf = StringIO.StringIO(self.body)
-        self.Config = ConfigParser.ConfigParser()
-        self.Config.readfp(buf)
         c.indent()
-        parameters = self.ConfigSectionMap("Parameters")
+        parameters = self.parse_parameter()
         init_func_decl = "def __init__(self, service_clients"
         for param in parameters:
-            init_func_decl += ", {0}".format(param.rstrip())
+            init_func_decl += ", {0}".format(param[0].rstrip())
         init_func_decl += "):\n"
         c.write(init_func_decl)
         c.indent()
         c.write("self.state = None\n")
         for param in parameters:
-            c.write("self.{0} = {0}\n".format(param.rstrip()))
-        variables = self.ConfigSectionMap("Variables")
+            c.write("self.{0} = {0}\n".format(param[0].rstrip()))
+        variables = self.parse_variables()
         for var in variables:
-            c.write("self.{0} = None\n".format(var.rstrip()))
+            c.write("self.{0} = None\n".format(var[0].rstrip()))
         c.write("self.service_clients = service_clients\n")
         c.write("self.tasks = beam.RoutineTaskQueue()\n")
         c.write("self.completion_queue = beam.Queue()\n")
@@ -188,9 +201,9 @@ class StateMachineGenerator:
                         c.write("return self.{0}()\n".format(destination_state))
                         c.dedent()
                     elif edge == "&#949;":
-                        c.indent()
+                        #c.indent()
                         c.write("return self.{0}()\n".format(destination_state))
-                        c.dedent()
+                        #c.dedent()
             c.dedent()
             c.dedent()
             c.write("\n")

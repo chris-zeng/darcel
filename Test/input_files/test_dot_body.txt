@@ -1,0 +1,16 @@
+digraph test_dot_body{
+    S0 -> S1 [label="E0"];
+    S1 -> S2 [label="E1"];
+    S2 -> S3 [label="E2"];
+    S3 -> S4 [label="&#949;"];
+}
+
+[Parameters]
+param1:type_1
+param2:type_2
+param3:type_3
+
+[Variables]
+var1:type_1
+var2:type_2
+var3:type_3
