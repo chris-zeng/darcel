@@ -1,5 +1,5 @@
 digraph test_parameters{
-    S0 -> S1 [label="&#949;"];
+    S0 -> S1 [label="C0"];
 }
 
 [Parameters]

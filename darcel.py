@@ -154,20 +154,16 @@ class StateMachineGenerator:
             init_func_decl += ", {0}".format(param[0].rstrip())
         init_func_decl += "):\n"
         c.write(init_func_decl)
-        c.indent()
-        c.write("self.state = None\n")
+        c.indent()   
+        c.write("self.service_clients = service_clients\n")
         for param in parameters:
             c.write("self.{0} = {0}\n".format(param[0].rstrip()))
         variables = self.parse_variables()
         for var in variables:
-            c.write("self.{0} = None\n".format(var[0].rstrip()))
-        c.write("self.service_clients = service_clients\n")
+            c.write("self.{0} = None\n".format(var[0].rstrip()))        
+        c.write("self.state = None\n")
         c.write("self.tasks = beam.RoutineTaskQueue()\n")
         c.write("self.completion_queue = beam.Queue()\n")
-        c.write("""self.market_data_client = self.\\
-                service_clients.get_market_data_client()\n""")
-        c.write("self.order_execution_client = self.service_clients.\ \n")
-        c.write("        get_order_execution_client()\n")
         c.dedent()
         c.dedent()
         c.write("\n")
@@ -215,6 +211,9 @@ class StateMachineGenerator:
         for condition in conditions:
             c.indent()
             c.write("def {0}(self):\n".format(condition))
+            c.indent()
+            c.write("pass")
+            c.dedent()
             c.dedent()
             c.write("\n")
 

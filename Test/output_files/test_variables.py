@@ -3,7 +3,7 @@ import nexus
 
 class test_variables:
     def __init__(self, service_clients):
-        self.state = None
+        self.service_clients = service_clients
         self.var_1 = None
         self.var_2 = None
         self.var1 = None
@@ -12,13 +12,9 @@ class test_variables:
         self.var4 = None
         self.var5 = None
         self.var_6 = None
-        self.service_clients = service_clients
+        self.state = None
         self.tasks = beam.RoutineTaskQueue()
         self.completion_queue = beam.Queue()
-        self.market_data_client = self.\
-                service_clients.get_market_data_client()
-        self.order_execution_client = self.service_clients.\ 
-                get_order_execution_client()
 
     def start(self):
         self.tasks.push(self.S0)

@@ -57,6 +57,8 @@ class DarcelUnitTest(unittest.TestCase):
         expected_file_path = self.expected_files_folder_path + \
             "/test_variables_expected.py"
         self.assertTrue(filecmp.cmp(output_file_path,expected_file_path))
+        
+    
 
 def main():
     unittest.main()
