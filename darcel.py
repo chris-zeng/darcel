@@ -212,7 +212,7 @@ class StateMachineGenerator:
             c.indent()
             c.write("def {0}(self):\n".format(condition))
             c.indent()
-            c.write("pass")
+            c.write("pass\n")
             c.dedent()
             c.dedent()
             c.write("\n")

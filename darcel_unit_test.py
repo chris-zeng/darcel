@@ -58,7 +58,14 @@ class DarcelUnitTest(unittest.TestCase):
             "/test_variables_expected.py"
         self.assertTrue(filecmp.cmp(output_file_path,expected_file_path))
         
-    
+    def test_conditions(self):
+        input_file_path = self.input_files_folder_path + "/test_conditions.txt"
+        output_file_path = self.output_files_folder_path + "/test_conditions.py"
+        d = darcel.StateMachineGenerator(input_file_path, output_file_path)
+        d.generate_graph()
+        expected_file_path = self.expected_files_folder_path + \
+            "/test_conditions_expected.py"
+        self.assertTrue(filecmp.cmp(output_file_path,expected_file_path))
 
 def main():
     unittest.main()
