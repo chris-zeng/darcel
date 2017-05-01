@@ -1,0 +1,14 @@
+digraph test_variables{
+    S0 -> S1 [label="&#949;"];
+}
+
+[Variables]
+var_1:type_a
+var_2:type_a
+var1:type_a
+var2:type_a
+var3:type_a
+var4:type_a
+var5:type_a
+var_6:type_a
+
