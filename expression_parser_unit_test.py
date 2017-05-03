@@ -2,14 +2,13 @@ import expression_parser
 import os
 import unittest
 
-
 class ExpressionParserUnitTest(unittest.TestCase):
     def setUp(self):
         return
-        
+
     def tearDown(self):
         return
-        
+
     def test_1(self):
         input=[]
         input.append("class()")
@@ -25,7 +24,6 @@ class ExpressionParserUnitTest(unittest.TestCase):
         result=[]
         for i in input:
             result.append(str(EP.parse_expression(i)))
-        
         self.assertEquals("[['class']]",result[0])
         self.assertEquals("[['a', '=', '1', '+', '1']]", result[1])
         self.assertEquals("[['a', '=', '1', '+', '1', '+', '1', '+', "+\
@@ -39,9 +37,7 @@ class ExpressionParserUnitTest(unittest.TestCase):
             " '+', '1', '+', '1']]", result[7])
         self.assertEquals("[['class', 'a', '=', '1', '+', '1', '+', '1', " + \
             "'+', '1', '+', '1', 'b']]", result[8])
-        
-           
-            
+
 def main():
     unittest.main()
 
