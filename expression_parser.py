@@ -23,18 +23,22 @@ equal_equal_op = Literal('==')
 not_equal_op = Literal('!=')
 comp_op = (greater_op | less_op | greater_equal_op | less_equal_op |
     equal_equal_op | not_equal_op)
+and_op = Literal("&&")
+or_op = Literal("||")
+binary_op = and_op | or_op
 left_paren = Literal('(')
 right_paren = Literal(')')
 identifier = Combine(alpha + ZeroOrMore(alpha|number))
 qualified_name = Combine(identifier + ZeroOrMore(point+identifier))
+ops = arithmetic_op|multi_op|comp_op|assign_op|binary_op
 
+expr = Forward()
 atom = integer | money | decimal | boolean
-exp = Forward()
 
-exp << atom + arithmetic_op + atom | atom + comp_op + atom
+expr << identifier + assign_op + atom + ZeroOrMore(ops + atom)
 
 #bnf = Optional(identifier + assign_op)+expr
 
-input = "$1.0--1"
+input = "a=$1.0--1+1"
 
-print exp.parseString(input)
+print expr.parseString(input)
