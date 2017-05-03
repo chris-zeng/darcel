@@ -19,7 +19,7 @@ class ExpressionParserUnitTest(unittest.TestCase):
         input.append("class(a, b)")
         input.append("class(True, c)")
         input.append("class(1+1+1+1+1)")
-        input.append("class(1+1+1+1+1, b)")
+        input.append("class($1+$1+$1+$1*$11, b)")
         input.append("c<=B&&False&&True")
         input.append("C>=B&&C==False||B<=D")
         EP = expression_parser.ExpressionParser()
@@ -37,8 +37,8 @@ class ExpressionParserUnitTest(unittest.TestCase):
         self.assertEquals("[['class', 'True', 'c']]", result[6])
         self.assertEquals("[['class', '1', '+', '1', '+', '1',"
             " '+', '1', '+', '1']]", result[7])
-        self.assertEquals("[['class', '1', '+', '1', '+', '1', "
-            "'+', '1', '+', '1', 'b']]", result[8])
+        self.assertEquals("[['class', '$1', '+', '$1', '+', '$1', "
+            "'+', '$1', '*', '$11', 'b']]", result[8])
         self.assertEquals("[['c', '<=', 'B', '&&', 'False', '&&', 'True']]",
             result[9])
         self.assertEquals("[['C', '>=', 'B', '&&', 'C', '==', 'False', '||', "
