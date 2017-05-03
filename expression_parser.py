@@ -35,7 +35,7 @@ class ExpressionParser:
         ops = arithmetic_op|multi_op|comp_op|assign_op|binary_op
         expr = Forward()
         atom = integer | money | decimal | boolean | qualified_name
-        expr << (atom ^ (identifier + assign_op + expr + ZeroOrMore(ops + expr)) ^ \
+        expr << (atom ^ (atom + ZeroOrMore(ops + expr)) ^ \
                 (qualified_name + left_paren + Optional(
-                expr + ZeroOrMore(Suppress(',')+expr)) + right_paren))
+                 expr + ZeroOrMore(Suppress(',')+expr)) + right_paren))
         return expr.searchString(input)
