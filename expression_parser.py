@@ -1,5 +1,6 @@
 from pyparsing import *
 
+ 
 point = Literal('.')
 plus_op = Literal('+')
 minus_op = Literal('-')
@@ -26,19 +27,28 @@ comp_op = (greater_op | less_op | greater_equal_op | less_equal_op |
 and_op = Literal("&&")
 or_op = Literal("||")
 binary_op = and_op | or_op
-left_paren = Literal('(')
-right_paren = Literal(')')
+left_paren = Suppress(Literal('('))
+right_paren = Suppress(Literal(')'))
 identifier = Combine(alpha + ZeroOrMore(alpha|number))
 qualified_name = Combine(identifier + ZeroOrMore(point+identifier))
 ops = arithmetic_op|multi_op|comp_op|assign_op|binary_op
 
 expr = Forward()
-atom = integer | money | decimal | boolean
+atom = integer | money | decimal | boolean| expr | qualified_name
 
-expr << identifier + assign_op + atom + ZeroOrMore(ops + atom)
+expr << ((identifier + assign_op + atom + ZeroOrMore(ops + atom)) | \
+        (qualified_name + left_paren + Optional(atom + ZeroOrMore(Suppress(',')+atom)) + right_paren))
 
 #bnf = Optional(identifier + assign_op)+expr
 
-input = "a=$1.0--1+1"
+input=[]
+input.append("class()")
+input.append("a=1+1")
+input.append("a=1+1+1+1+1")
+input.append("a=1+1--1+1")
+input.append("class(a)")
+input.append("class(a, b)")
+input.append("class(a, c)")
 
-print expr.parseString(input)
+for i in input:
+    print expr.parseString(i)
