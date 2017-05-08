@@ -36,7 +36,7 @@ class ExpressionParser:
         atom = integer | money | decimal | boolean | qualified_name
         expr << (atom ^ (atom + ZeroOrMore(ops + atom)) ^ \
                 (qualified_name + left_paren + Optional(
-                 expr + ZeroOrMore(Suppress(',')+expr)) + right_paren))
+                 expr + ZeroOrMore(Suppress(',')+expr)) + right_paren)) ^ \
+                 expr + Suppress(Literal('[')) + OneOrMore(expr) + \
+                    Suppress(Literal(']'))
         return expr.searchString(input)
-
-#print ExpressionParser().parse_expression("A<=b")
