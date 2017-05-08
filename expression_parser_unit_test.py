@@ -22,6 +22,7 @@ class ExpressionParserUnitTest(unittest.TestCase):
         input.append("class($1+$1+$1+$1*$11, b)")
         input.append("c<=B&&False&&True")
         input.append("C>=B&&C==False||B<=D")
+        input.append("A[1 2 3 4 5 6 7]")
         EP = expression_parser.ExpressionParser()
         result=[]
         for i in input:
@@ -43,6 +44,8 @@ class ExpressionParserUnitTest(unittest.TestCase):
             result[9])
         self.assertEquals("[['C', '>=', 'B', '&&', 'C', '==', 'False', '||', "
             "'B', '<=', 'D']]", result[10])
+        self.assertEquals("[['A'], ['1'], ['2'], ['3'], ['4'], ['5'], ['6'], "
+            "['7']]", result[11])
 
 def main():
     unittest.main()
